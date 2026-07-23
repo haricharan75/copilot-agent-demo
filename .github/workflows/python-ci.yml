@@ -1,0 +1,61 @@
+name: Python CI
+
+on:
+  push:
+    branches:
+      - main
+      - feature/**
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check Code Formatting
+        run: black --check .
+
+      - name: Run Pylint
+        run: pylint app.py student.py database.py
+
+      - name: Run Tests
+        run: python -m pytest -v
+
+      - name: Run Coverage
+        run: python -m pytest --cov=. --cov-report=term-missing
+
+      - name: Send email on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "GitHub Actions Failed - Student Management System"
+          to: ${{ secrets.EMAIL_USERNAME }}
+          from: GitHub Actions
+          body: |
+            GitHub Actions workflow has failed.
+
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Workflow: ${{ github.workflow }}
+
+            Please check the GitHub Actions logs for more details.
