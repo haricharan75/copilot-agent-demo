@@ -1,18 +1,28 @@
 class Student:
+    GRADE_THRESHOLDS = (
+        (90, "A+"),
+        (80, "A"),
+        (70, "B"),
+        (60, "C"),
+        (50, "D"),
+    )
+
     def __init__(self, student_id, name, age):
+        if not isinstance(student_id, int) or student_id <= 0:
+            raise ValueError("Student ID must be a positive integer.")
         self.student_id = student_id
-        self.name = name
-        self.age = age
         self.courses = []
         self.marks = {}
+        self.update_name(name)
+        self.update_age(age)
 
     def update_name(self, new_name):
-        if not new_name.strip():
+        if not isinstance(new_name, str) or not new_name.strip():
             raise ValueError("Name cannot be empty.")
         self.name = new_name
 
     def update_age(self, new_age):
-        if new_age < 5 or new_age > 100:
+        if not isinstance(new_age, int) or new_age < 5 or new_age > 100:
             raise ValueError("Invalid age.")
         self.age = new_age
 
@@ -25,7 +35,7 @@ class Student:
             self.courses.remove(course_name)
 
     def add_mark(self, subject, mark):
-        if mark < 0 or mark > 100:
+        if not isinstance(mark, (int, float)) or mark < 0 or mark > 100:
             raise ValueError("Marks should be between 0 and 100.")
         self.marks[subject] = mark
 
@@ -40,17 +50,9 @@ class Student:
 
     def get_grade(self):
         average = self.calculate_average()
-
-        if average >= 90:
-            return "A+"
-        if average >= 80:
-            return "A"
-        if average >= 70:
-            return "B"
-        if average >= 60:
-            return "C"
-        if average >= 50:
-            return "D"
+        for threshold, grade in self.GRADE_THRESHOLDS:
+            if average >= threshold:
+                return grade
         return "F"
 
     def is_passed(self):
