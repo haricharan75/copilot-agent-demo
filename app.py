@@ -2,6 +2,11 @@ from database import StudentDatabase
 
 
 def display_student(student):
+    """Prints a formatted summary of a student's record to stdout.
+
+    Args:
+        student (Student): The student whose record should be displayed.
+    """
     data = student.display()
 
     print("\n----------------------------")
@@ -17,6 +22,7 @@ def display_student(student):
 
 
 def menu():
+    """Prints the main menu of available actions to stdout."""
     print("\n===== Student Management System =====")
     print("1. Add Student")
     print("2. View All Students")
@@ -38,6 +44,14 @@ def menu():
 
 
 def main():
+    """Runs the interactive command-line menu loop for the student database.
+
+    Repeatedly displays the menu, reads a choice from stdin, and performs
+    the corresponding operation against a `StudentDatabase` until the user
+    chooses to exit. Invalid input that raises a `ValueError` (e.g. a
+    non-numeric age, or a validation failure in `Student`) is caught and
+    reported without stopping the loop.
+    """
     database = StudentDatabase()
 
     while True:

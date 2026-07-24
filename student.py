@@ -1,4 +1,15 @@
 class Student:
+    """Represents a single student and their academic record.
+
+    Attributes:
+        student_id (int): Unique, positive identifier for the student.
+        name (str): The student's full name.
+        age (int): The student's age in years (5-100 inclusive).
+        courses (list[str]): Names of courses the student is enrolled in.
+        marks (dict[str, int | float]): Mapping of subject name to mark
+            (0-100 inclusive).
+    """
+
     GRADE_THRESHOLDS = (
         (90, "A+"),
         (80, "A"),
@@ -8,6 +19,18 @@ class Student:
     )
 
     def __init__(self, student_id, name, age):
+        """Initializes a Student with an id, name, and age.
+
+        Args:
+            student_id (int): Unique, positive identifier for the student.
+            name (str): The student's full name. Cannot be empty or blank.
+            age (int): The student's age. Must be between 5 and 100 inclusive.
+
+        Raises:
+            ValueError: If `student_id` is not a positive integer, `name` is
+                not a non-empty string, or `age` is not an integer between
+                5 and 100 inclusive.
+        """
         if not isinstance(student_id, int) or student_id <= 0:
             raise ValueError("Student ID must be a positive integer.")
         self.student_id = student_id
@@ -17,38 +40,95 @@ class Student:
         self.update_age(age)
 
     def update_name(self, new_name):
+        """Updates the student's name.
+
+        Args:
+            new_name (str): The new name to assign. Cannot be empty or
+                consist only of whitespace.
+
+        Raises:
+            ValueError: If `new_name` is not a string, or is empty/blank.
+        """
         if not isinstance(new_name, str) or not new_name.strip():
             raise ValueError("Name cannot be empty.")
         self.name = new_name
 
     def update_age(self, new_age):
+        """Updates the student's age.
+
+        Args:
+            new_age (int): The new age to assign. Must be between 5 and 100
+                inclusive.
+
+        Raises:
+            ValueError: If `new_age` is not an integer, or is outside the
+                5-100 range.
+        """
         if not isinstance(new_age, int) or new_age < 5 or new_age > 100:
             raise ValueError("Invalid age.")
         self.age = new_age
 
     def enroll_course(self, course_name):
+        """Enrolls the student in a course, if not already enrolled.
+
+        Args:
+            course_name (str): Name of the course to enroll in.
+        """
         if course_name not in self.courses:
             self.courses.append(course_name)
 
     def remove_course(self, course_name):
+        """Removes the student from a course, if currently enrolled.
+
+        Args:
+            course_name (str): Name of the course to remove.
+        """
         if course_name in self.courses:
             self.courses.remove(course_name)
 
     def add_mark(self, subject, mark):
+        """Records or updates the student's mark for a subject.
+
+        Args:
+            subject (str): Name of the subject the mark belongs to.
+            mark (int | float): The mark to record. Must be between 0 and
+                100 inclusive.
+
+        Raises:
+            ValueError: If `mark` is not a number, or is outside the 0-100
+                range.
+        """
         if not isinstance(mark, (int, float)) or mark < 0 or mark > 100:
             raise ValueError("Marks should be between 0 and 100.")
         self.marks[subject] = mark
 
     def remove_mark(self, subject):
+        """Removes a recorded mark for a subject, if one exists.
+
+        Args:
+            subject (str): Name of the subject whose mark should be removed.
+        """
         if subject in self.marks:
             del self.marks[subject]
 
     def calculate_average(self):
+        """Calculates the student's average mark across all subjects.
+
+        Returns:
+            int | float: The average of all recorded marks, or 0 if no
+            marks have been recorded.
+        """
         if not self.marks:
             return 0
         return sum(self.marks.values()) / len(self.marks)
 
     def get_grade(self):
+        """Determines the student's letter grade from their average mark.
+
+        Returns:
+            str: One of "A+", "A", "B", "C", "D", or "F", based on where
+            the average mark falls against `GRADE_THRESHOLDS`.
+        """
         average = self.calculate_average()
         for threshold, grade in self.GRADE_THRESHOLDS:
             if average >= threshold:
@@ -56,9 +136,21 @@ class Student:
         return "F"
 
     def is_passed(self):
+        """Determines whether the student has passed.
+
+        Returns:
+            bool: True if the average mark is at least 50, False otherwise.
+        """
         return self.calculate_average() >= 50
 
     def display(self):
+        """Builds a summary of the student's record.
+
+        Returns:
+            dict: A mapping with keys "Student ID", "Name", "Age",
+            "Courses", "Marks", "Average", "Grade", and "Passed",
+            summarizing the student's current state.
+        """
         return {
             "Student ID": self.student_id,
             "Name": self.name,
@@ -71,6 +163,12 @@ class Student:
         }
 
     def __str__(self):
+        """Builds a concise, human-readable representation of the student.
+
+        Returns:
+            str: A string of the form
+            "Student(id=..., name=..., age=..., grade=...)".
+        """
         return (
             f"Student("
             f"id={self.student_id}, "

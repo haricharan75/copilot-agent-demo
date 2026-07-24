@@ -25,6 +25,33 @@ A Python-based Student Management System developed for learning DevSecOps practi
 - Bandit
 - GitHub Actions
 
+## Setup
+
+Create and activate a virtual environment, then install dependencies from
+`requirements.txt`.
+
+**Windows (PowerShell):**
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+**macOS / Linux:**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Copy `.env.example` to `.env` and fill in real values before running the app:
+
+```bash
+cp .env.example .env
+```
+
 ## Run
 
 ```bash
@@ -32,6 +59,8 @@ python app.py
 ```
 
 ## Run Tests
+
+With the virtual environment activated, run the test suite with pytest:
 
 ```bash
 pytest -v
