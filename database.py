@@ -1,4 +1,8 @@
+import os
+
 from student import Student
+
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
 class StudentDatabase:
