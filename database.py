@@ -3,6 +3,7 @@ import os
 from student import Student
 
 DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_PASSWORDS = "super_secret_production_password_123!"
 
 
 class StudentDatabase:
