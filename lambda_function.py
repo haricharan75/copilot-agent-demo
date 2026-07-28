@@ -6,9 +6,9 @@ import os
 # ─────────────────────────────────────────
 # CONFIG
 # ─────────────────────────────────────────
-VAULT_DNS         = os.environ.get("VAULT_DNS")
-VAULT_USERNAME    = os.environ.get("VAULT_USERNAME")
-VAULT_PASSWORD    = os.environ.get("VAULT_PASSWORD")
+VAULT_DNS = os.environ.get("VAULT_DNS")
+VAULT_USERNAME = os.environ.get("VAULT_USERNAME")
+VAULT_PASSWORD = os.environ.get("VAULT_PASSWORD")
 VAULT_API_VERSION = "v24.1"
 
 
@@ -17,8 +17,8 @@ def lambda_handler(event, context):
     print(f"Tool Lambda called: {json.dumps(event)}")
 
     try:
-        action     = event.get("actionGroup", "")
-        function   = event.get("function", "")
+        action = event.get("actionGroup", "")
+        function = event.get("function", "")
         parameters = event.get("parameters", [])
 
         print(f"Action  : {action}")
@@ -31,46 +31,51 @@ def lambda_handler(event, context):
 
             session_id = authenticate_veeva()
             if not session_id:
-                return agent_response(action, function,
-                    {"error": "Veeva authentication failed"})
+                return agent_response(
+                    action, function, {"error": "Veeva authentication failed"}
+                )
 
             records = search_veeva_records(session_id, object_type)
 
-            return agent_response(action, function, {
-                "records"    : records,
-                "total_count": len(records),
-                "object_type": object_type,
-                "status"     : "success"
-            })
+            return agent_response(
+                action,
+                function,
+                {
+                    "records": records,
+                    "total_count": len(records),
+                    "object_type": object_type,
+                    "status": "success",
+                },
+            )
 
         else:
-            return agent_response(action, function,
-                {"error": f"Unknown function: {function}"})
+            return agent_response(
+                action, function, {"error": f"Unknown function: {function}"}
+            )
 
     except Exception as e:
         print(f"Tool Lambda error: {str(e)}")
         return agent_response(
-            event.get("actionGroup", ""),
-            event.get("function", ""),
-            {"error": str(e)}
+            event.get("actionGroup", ""), event.get("function", ""), {"error": str(e)}
         )
 
 
 def authenticate_veeva():
     try:
-        auth_url  = f"https://{VAULT_DNS}/api/{VAULT_API_VERSION}/auth"
-        auth_data = urllib.parse.urlencode({
-            "username": VAULT_USERNAME,
-            "password": VAULT_PASSWORD
-        }).encode("utf-8")
+        auth_url = f"https://{VAULT_DNS}/api/{VAULT_API_VERSION}/auth"
+        auth_data = urllib.parse.urlencode(
+            {"username": VAULT_USERNAME, "password": VAULT_PASSWORD}
+        ).encode("utf-8")
 
         auth_req = urllib.request.Request(
-            auth_url, data=auth_data, method="POST",
-            headers={"Content-Type": "application/x-www-form-urlencoded"}
+            auth_url,
+            data=auth_data,
+            method="POST",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
 
         with urllib.request.urlopen(auth_req, timeout=10) as resp:
-            auth_body  = json.loads(resp.read().decode("utf-8"))
+            auth_body = json.loads(resp.read().decode("utf-8"))
             session_id = auth_body.get("sessionId")
 
         if session_id:
@@ -93,7 +98,9 @@ def search_veeva_records(session_id, object_type):
         if object_type == "product__v":
             vql = "SELECT id, name__v FROM product__v WHERE status__v = 'active__v'"
         elif object_type == "drug_product__v":
-            vql = "SELECT id, name__v FROM drug_product__v WHERE status__v = 'active__v'"
+            vql = (
+                "SELECT id, name__v FROM drug_product__v WHERE status__v = 'active__v'"
+            )
         elif object_type == "drug_substance__v":
             vql = "SELECT id, name__v FROM drug_substance__v WHERE status__v = 'active__v'"
         elif object_type == "excipient__v":
@@ -108,11 +115,9 @@ def search_veeva_records(session_id, object_type):
         )
 
         query_req = urllib.request.Request(
-            query_url, method="GET",
-            headers={
-                "Authorization": session_id,
-                "Accept"       : "application/json"
-            }
+            query_url,
+            method="GET",
+            headers={"Authorization": session_id, "Accept": "application/json"},
         )
 
         with urllib.request.urlopen(query_req, timeout=15) as resp:
@@ -131,16 +136,12 @@ def agent_response(action_group, function, result):
     return {
         "messageVersion": "1.0",
         "response": {
-            "actionGroup"     : action_group,
-            "function"        : function,
+            "actionGroup": action_group,
+            "function": function,
             "functionResponse": {
-                "responseBody": {
-                    "TEXT": {
-                        "body": json.dumps(result)
-                    }
-                }
-            }
-        }
+                "responseBody": {"TEXT": {"body": json.dumps(result)}}
+            },
+        },
     }
 
 

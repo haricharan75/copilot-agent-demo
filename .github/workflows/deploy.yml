@@ -1,0 +1,26 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main # Change this if your main branch has a different name
+
+jobs:
+  deploy:
+    name: Build ZIP Package
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Download the code from GitHub
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Create the ZIP package (This is the "Build" step your mentor mentioned)
+      - name: Create Deployment ZIP
+        run: |
+          zip -r lambda.zip . -x "*.git*" ".github/*"
+          echo "Build successful: lambda.zip created!"
+          
+      # 3. Verify the file exists (Just for testing)
+      - name: Verify ZIP creation
+        run: ls -lh lambda.zip
