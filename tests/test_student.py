@@ -1,6 +1,13 @@
+import csv
+
 import pytest
 
-from student import Student
+from student import CSV_HEADERS, Student, export_students_to_csv
+
+
+def read_csv(path):
+    with open(path, newline="", encoding="utf-8") as csv_file:
+        return list(csv.reader(csv_file))
 
 
 def test_student_creation():
@@ -269,3 +276,145 @@ def test_string_method():
 
     assert "Hari" in text
     assert "101" in text
+
+
+def test_get_grade_rows():
+    student = Student(101, "Hari", 21)
+
+    student.add_mark("Python", 80)
+    student.add_mark("Java", 90)
+
+    rows = student.get_grade_rows()
+
+    assert rows == [
+        [101, "Hari", 21, "Java", 90, 85.0, "A", True],
+        [101, "Hari", 21, "Python", 80, 85.0, "A", True],
+    ]
+
+
+def test_get_grade_rows_sorted_by_subject():
+    student = Student(101, "Hari", 21)
+
+    student.add_mark("Python", 80)
+    student.add_mark("Java", 90)
+    student.add_mark("C", 70)
+
+    subjects = [row[3] for row in student.get_grade_rows()]
+
+    assert subjects == ["C", "Java", "Python"]
+
+
+def test_get_grade_rows_with_no_marks():
+    student = Student(101, "Hari", 21)
+
+    rows = student.get_grade_rows()
+
+    assert rows == [[101, "Hari", 21, "", "", 0, "F", False]]
+
+
+def test_export_grades_to_csv(tmp_path):
+    student = Student(101, "Hari", 21)
+
+    student.add_mark("Python", 80)
+    student.add_mark("Java", 90)
+
+    path = tmp_path / "grades.csv"
+    student.export_grades_to_csv(str(path))
+
+    assert read_csv(path) == [
+        list(CSV_HEADERS),
+        ["101", "Hari", "21", "Java", "90", "85.0", "A", "True"],
+        ["101", "Hari", "21", "Python", "80", "85.0", "A", "True"],
+    ]
+
+
+def test_export_grades_to_csv_returns_path(tmp_path):
+    student = Student(101, "Hari", 21)
+
+    path = tmp_path / "grades.csv"
+
+    assert student.export_grades_to_csv(str(path)) == str(path)
+
+
+def test_export_grades_to_csv_with_no_marks(tmp_path):
+    student = Student(101, "Hari", 21)
+
+    path = tmp_path / "grades.csv"
+    student.export_grades_to_csv(str(path))
+
+    rows = read_csv(path)
+
+    assert rows[0] == list(CSV_HEADERS)
+    assert rows[1] == ["101", "Hari", "21", "", "", "0", "F", "False"]
+
+
+def test_export_grades_to_csv_overwrites_existing_file(tmp_path):
+    student = Student(101, "Hari", 21)
+    student.add_mark("Python", 80)
+
+    path = tmp_path / "grades.csv"
+    path.write_text("stale content\n", encoding="utf-8")
+
+    student.export_grades_to_csv(str(path))
+
+    rows = read_csv(path)
+
+    assert rows[0] == list(CSV_HEADERS)
+    assert len(rows) == 2
+
+
+def test_export_grades_to_csv_escapes_commas_in_name(tmp_path):
+    student = Student(101, "Hari, Charan", 21)
+    student.add_mark("Python", 80)
+
+    path = tmp_path / "grades.csv"
+    student.export_grades_to_csv(str(path))
+
+    assert read_csv(path)[1][1] == "Hari, Charan"
+
+
+@pytest.mark.parametrize("bad_path", ["", "   ", None, 123])
+def test_export_grades_to_csv_invalid_path(bad_path):
+    student = Student(101, "Hari", 21)
+
+    with pytest.raises(ValueError):
+        student.export_grades_to_csv(bad_path)
+
+
+def test_export_grades_to_csv_missing_directory(tmp_path):
+    student = Student(101, "Hari", 21)
+
+    path = tmp_path / "missing" / "grades.csv"
+
+    with pytest.raises(OSError):
+        student.export_grades_to_csv(str(path))
+
+
+def test_export_students_to_csv(tmp_path):
+    first = Student(101, "Hari", 21)
+    first.add_mark("Python", 80)
+
+    second = Student(102, "Charan", 22)
+    second.add_mark("Java", 40)
+
+    path = tmp_path / "grades.csv"
+    export_students_to_csv([first, second], str(path))
+
+    assert read_csv(path) == [
+        list(CSV_HEADERS),
+        ["101", "Hari", "21", "Python", "80", "80.0", "A", "True"],
+        ["102", "Charan", "22", "Java", "40", "40.0", "F", "False"],
+    ]
+
+
+def test_export_students_to_csv_empty_list(tmp_path):
+    path = tmp_path / "grades.csv"
+
+    export_students_to_csv([], str(path))
+
+    assert read_csv(path) == [list(CSV_HEADERS)]
+
+
+def test_export_students_to_csv_invalid_path():
+    with pytest.raises(ValueError):
+        export_students_to_csv([Student(101, "Hari", 21)], "")

@@ -1,3 +1,17 @@
+import csv
+
+CSV_HEADERS = (
+    "Student ID",
+    "Name",
+    "Age",
+    "Subject",
+    "Mark",
+    "Average",
+    "Grade",
+    "Passed",
+)
+
+
 class Student:
     """Represents a single student and their academic record.
 
@@ -162,6 +176,69 @@ class Student:
             "Passed": self.is_passed(),
         }
 
+    def get_grade_rows(self):
+        """Builds the CSV rows describing this student's grades.
+
+        Produces one row per recorded subject, ordered by subject name so
+        that exports are stable regardless of the order marks were added.
+        A student with no recorded marks still yields a single row, with
+        empty "Subject" and "Mark" values, so they are not silently
+        omitted from an export.
+
+        Returns:
+            list[list]: Rows aligned with `CSV_HEADERS`.
+        """
+        average = round(self.calculate_average(), 2)
+        grade = self.get_grade()
+        passed = self.is_passed()
+
+        if not self.marks:
+            return [
+                [
+                    self.student_id,
+                    self.name,
+                    self.age,
+                    "",
+                    "",
+                    average,
+                    grade,
+                    passed,
+                ]
+            ]
+
+        return [
+            [
+                self.student_id,
+                self.name,
+                self.age,
+                subject,
+                self.marks[subject],
+                average,
+                grade,
+                passed,
+            ]
+            for subject in sorted(self.marks)
+        ]
+
+    def export_grades_to_csv(self, file_path):
+        """Writes this student's grades to a CSV file.
+
+        The file is created (or overwritten) with a header row followed by
+        the rows from `get_grade_rows`.
+
+        Args:
+            file_path (str): Path of the CSV file to write. Cannot be empty
+                or consist only of whitespace.
+
+        Returns:
+            str: The `file_path` that was written.
+
+        Raises:
+            ValueError: If `file_path` is not a non-empty string.
+            OSError: If the file cannot be opened for writing.
+        """
+        return _write_csv(file_path, self.get_grade_rows())
+
     def __str__(self):
         """Builds a concise, human-readable representation of the student.
 
@@ -176,3 +253,52 @@ class Student:
             f"age={self.age}, "
             f"grade={self.get_grade()})"
         )
+
+
+def _write_csv(file_path, rows):
+    """Writes a header row and `rows` to a CSV file.
+
+    Args:
+        file_path (str): Path of the CSV file to write. Cannot be empty or
+            consist only of whitespace.
+        rows (list[list]): Rows aligned with `CSV_HEADERS`.
+
+    Returns:
+        str: The `file_path` that was written.
+
+    Raises:
+        ValueError: If `file_path` is not a non-empty string.
+        OSError: If the file cannot be opened for writing.
+    """
+    if not isinstance(file_path, str) or not file_path.strip():
+        raise ValueError("File path cannot be empty.")
+
+    with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(CSV_HEADERS)
+        writer.writerows(rows)
+
+    return file_path
+
+
+def export_students_to_csv(students, file_path):
+    """Writes the grades of several students to a single CSV file.
+
+    Args:
+        students (iterable[Student]): Students whose grades to export.
+        file_path (str): Path of the CSV file to write. Cannot be empty or
+            consist only of whitespace.
+
+    Returns:
+        str: The `file_path` that was written.
+
+    Raises:
+        ValueError: If `file_path` is not a non-empty string.
+        OSError: If the file cannot be opened for writing.
+    """
+    rows = []
+
+    for student in students:
+        rows.extend(student.get_grade_rows())
+
+    return _write_csv(file_path, rows)
